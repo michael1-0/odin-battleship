@@ -14,5 +14,13 @@ export default [
         ...globals.browser,
       },
     },
+    overrides: [
+      {
+        files: ["tests/**/*"],
+        env: {
+          jest: true,
+        },
+      },
+    ],
   },
 ];
