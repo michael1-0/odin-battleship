@@ -6,41 +6,45 @@ export default class Gameboard {
     this.hitShots = [];
   }
 
-  placeShip(ship, startRow, startCol, orientation = "horizontal") {
-    const coordinates = this.#calculateShipCoordinates(
-      startRow,
-      startCol,
-      ship.length,
-      orientation,
-    );
-
-    if (!this.#validateShipCoordinates(this.board, coordinates)) {
-      throw new Error(
-        "Invalid ship placement: out-of-bound or overlapping other ships",
-      );
+  placeShip(ship, row, col, direction = "horizontal") {
+    if (!this.canPlaceShip(ship, row, col, direction)) {
+      return false;
     }
 
-    coordinates.forEach(({ row, col }) => {
-      this.board[row][col] = ship;
-    });
+    const positions = [];
+    for (let i = 0; i < ship.length; i++) {
+      const r = direction === "horizontal" ? row : row + i;
+      const c = direction === "horizontal" ? col + i : col;
+      this.board[r][c] = ship;
+      positions.push([r, c]);
+    }
 
-    this.ships.push({ ship, coordinates });
-    return coordinates;
+    this.ships.push({ ship, positions });
+    return true;
   }
 
-  receiveAttack(coordinates) {
-    const [row, col] = coordinates;
-    if (
-      row >= this.board.length ||
-      row < 0 ||
-      col >= this.board[0].length ||
-      col < 0
-    ) {
-      throw new Error("Invalid attack placement: out-of-bound");
+  canPlaceShip(ship, row, col, direction = "horizontal") {
+    // Check bounds
+    if (direction === "horizontal") {
+      if (col + ship.length > 10) return false;
+    } else {
+      if (row + ship.length > 10) return false;
     }
+
+    // Check for overlapping ships
+    for (let i = 0; i < ship.length; i++) {
+      const r = direction === "horizontal" ? row : row + i;
+      const c = direction === "horizontal" ? col + i : col;
+      if (this.board[r][c] !== null) return false;
+    }
+
+    return true;
+  }
+
+  receiveAttack(row, col) {
     if (
       this.hitShots.some(([r, c]) => r === row && c === col) ||
-      this.missedShots.some(([r, c]) => (r === row) & (c === col))
+      this.missedShots.some(([r, c]) => r === row && c === col)
     ) {
       return "already-hit";
     }
@@ -57,12 +61,7 @@ export default class Gameboard {
   }
 
   isAllSunk() {
-    for (const element of this.ships) {
-      if (element.hits !== element.length) {
-        return false;
-      }
-    }
-    return true;
+    return this.ships.every(({ ship }) => ship.isSunk());
   }
 
   getShipAt(row, col) {
@@ -70,38 +69,10 @@ export default class Gameboard {
   }
 
   reset() {
-    this.board = this.#initializeGrid;
+    this.board = this.#initializeGrid();
     this.ships = [];
     this.missedShots = [];
     this.hitShots = [];
-  }
-
-  #validateShipCoordinates(board, coordinates) {
-    const rows = board.length;
-    const cols = board[0].length;
-    for (const { row, col } of coordinates) {
-      if (row < 0 || row >= rows || col < 0 || col >= cols) {
-        return false;
-      }
-      if (board[row][col] !== null) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  #calculateShipCoordinates(startRow, startCol, length, orientation) {
-    const coordinates = [];
-    for (let i = 0; i < length; i++) {
-      if (orientation === "horizontal") {
-        coordinates.push({ row: startRow, col: startCol + i });
-      } else if (orientation === "vertical") {
-        coordinates.push({ row: startRow + i, col: startCol });
-      } else {
-        throw new Error("Orientation must be horizontal or vertical");
-      }
-    }
-    return coordinates;
   }
 
   #initializeGrid() {
