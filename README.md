@@ -1,9 +1,2 @@
-# Webpack Template with ESLint and Prettier
-This is a basic Webpack template configured with ESLint and Prettier. 
-
-To use this template run `npm pkg set name="your-project-name" && npm install`  
-
-
-## Usage
-`npm run build` to build  
-`npm run dev` to host a local server
+# odin-battleship
+This project is a fun, modern twist on the classic Battleship game, built as part of The Odin Project using the MVC design pattern. The game's logic, the ship placements, move validations, and win conditions—is tucked away in the Model, while the View handles all the user-facing elements like ship displays and grid updates. The Controller bridges these two, ensuring smooth interactions and making sure your moves get accurately reflected on the board. It uses test-driven development using jest to keep everything running reliably by developing incrementally, one step at a time.
