@@ -1,8 +1,9 @@
 export default class Gameboard {
   constructor() {
     this.board = this.#initializeGrid();
-    this.shipPartMiss = -1;
     this.ships = [];
+    this.missedShots = [];
+    this.hitShots = [];
   }
 
   placeShip(ship, startRow, startCol, orientation = "horizontal") {
@@ -23,7 +24,7 @@ export default class Gameboard {
       this.board[row][col] = ship;
     });
 
-    this.ships.push(ship);
+    this.ships.push({ ship, coordinates });
     return coordinates;
   }
 
@@ -37,14 +38,21 @@ export default class Gameboard {
     ) {
       throw new Error("Invalid attack placement: out-of-bound");
     }
+    if (
+      this.hitShots.some(([r, c]) => r === row && c === col) ||
+      this.missedShots.some(([r, c]) => (r === row) & (c === col))
+    ) {
+      return "already-hit";
+    }
 
-    const cell = this.board[row][col];
-    if (cell) {
-      cell.hit();
-      return true;
+    const ship = this.board[row][col];
+    if (ship) {
+      ship.hit();
+      this.hitShots.push([row, col]);
+      return ship.isSunk() ? "sunk" : "hit";
     } else {
-      this.board[row][col] = this.shipPartMiss;
-      return false;
+      this.missedShots.push([row, col]);
+      return "miss";
     }
   }
 
@@ -57,6 +65,17 @@ export default class Gameboard {
     return true;
   }
 
+  getShipAt(row, col) {
+    return this.board[row][col];
+  }
+
+  reset() {
+    this.board = this.#initializeGrid;
+    this.ships = [];
+    this.missedShots = [];
+    this.hitShots = [];
+  }
+
   #validateShipCoordinates(board, coordinates) {
     const rows = board.length;
     const cols = board[0].length;
@@ -64,7 +83,7 @@ export default class Gameboard {
       if (row < 0 || row >= rows || col < 0 || col >= cols) {
         return false;
       }
-      if (board[row][col] !== 0) {
+      if (board[row][col] !== null) {
         return false;
       }
     }
@@ -90,7 +109,7 @@ export default class Gameboard {
     for (let i = 0; i < 10; i++) {
       const row = [];
       for (let j = 0; j < 10; j++) {
-        row.push(0);
+        row.push(null);
       }
       board.push(row);
     }

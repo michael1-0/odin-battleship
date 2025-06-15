@@ -1,40 +1,45 @@
 import Player from "../class/Player";
 
-const createDummyGameboard = () => {
-  return {
-    receiveAttack: jest.fn().mockImplementation((coords) => {
-      return `Attack received at [${coords}]`;
-    }),
-  };
-};
 describe("Player object", () => {
-  let humanGameboard, computerGameboard, human, computer;
-  beforeEach(() => {
-    humanGameboard = createDummyGameboard();
-    computerGameboard = createDummyGameboard();
-    human = new Player("human", humanGameboard);
-    computer = new Player("computer", computerGameboard);
+  test("creates player with name", () => {
+    const player = new Player("John");
+    expect(player.name).toBe("John");
+    expect(player.isComputer).toBe(false);
   });
-  test("Human player provides coordinates", () => {
-    expect(() => {
-      human.attack(computer);
-    }).toThrow("Human player must provide coordinates");
+  test("creates computer player", () => {
+    const computer = new Player("AI", true);
+    expect(computer.name).toBe("AI");
+    expect(computer.isComputer).toBe(true);
+  });
+  test("has gameboard and empty shots", () => {
+    const player = new Player("Test");
+    expect(player.gameboard).toBeDefined();
+    expect(player.previousShots).toEqual([]);
+  });
+  test("makeRandomShot returns valid coordinates", () => {
+    const player = new Player("Test");
+    const shot = player.makeRandomShot();
 
-    const attackResult = human.attack(computer, [0, 0]);
-    expect(attackResult).toBe("Attack received at [0,0]");
-    expect(computerGameboard.receiveAttack).toHaveBeenCalledWith([0, 0]);
+    expect(shot.row).toBeGreaterThanOrEqual(0);
+    expect(shot.row).toBeLessThan(10);
+    expect(shot.col).toBeGreaterThanOrEqual(0);
+    expect(shot.col).toBeLessThan(10);
   });
-  test("Human player cannot attack the same coordinate more than once", () => {
-    human.attack(computer, [1, 0]);
-    expect(() => {
-      human.attack(computer, [1, 0]);
-    }).toThrow("Cell [1,0] has already been attacked");
+  test("makeRandomShot adds to previousShots", () => {
+    const player = new Player("Test");
+    const shot = player.makeRandomShot();
+
+    expect(player.previousShots).toHaveLength(1);
+    expect(player.previousShots[0]).toEqual([shot.row, shot.col]);
   });
-  test("Computer player generate unique moves", () => {
-    const firstResult = computer.attack(human);
-    const secondResult =  computer.attack(human);
-    expect(computer.previousAttacks.length).toBe(2);
-    expect(computer.previousAttacks[0]).not.toBe(computer.previousAttacks[1]);
-    expect(humanGameboard.receiveAttack).toHaveBeenCalledTimes(2);
-  })
+  test("reset clears previousShots", () => {
+    const player = new Player("Test");
+    player.makeRandomShot();
+    player.makeRandomShot();
+
+    expect(player.previousShots).toHaveLength(2);
+
+    player.reset();
+    expect(player.previousShots).toEqual([]);
+  });
 });
